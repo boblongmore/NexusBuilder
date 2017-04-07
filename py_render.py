@@ -6,7 +6,7 @@ import os
 
 def config_render():
     #Parse the YAML file and produce a Python dict.
-    yaml_vars = yaml.load(open('nexus.yml').read())
+    yaml_vars = yaml.load(open('xlstoyaml.yml').read())
 
     #Load the Jinja2 template into a Python data structure.
     template = Template(open('nexus9k.j2').read())
@@ -15,7 +15,8 @@ def config_render():
     rendered_config = template.render(yaml_vars)
 
     #Write the rendered configuration to a text file.
-    config_name = yaml_vars['hostname']
+    #config_name = yaml_vars['hostname']
+    config_name = "testrender"
     with open(config_name, 'w') as config:
         config.write(rendered_config)
     if os.path.isfile(config_name):

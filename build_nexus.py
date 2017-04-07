@@ -9,8 +9,8 @@ def start_xls():
 	ipam_sheet_common = ipam_book.sheet_by_index(0)
 	ipam_sheet_vlan = ipam_book.sheet_by_index(1)
 	
-	out_file = open('xlstoyaml.yaml', 'a')
-	out_file.write('---\n\n')
+	out_file = open('xlstoyaml.yml', 'a')
+	#out_file.write('---\n\n')
 
 	items = {}
 
@@ -53,7 +53,7 @@ def start_xls():
 					SNMP_RO_list.extend([RO_string])
 				except NameError:
 					SNMP_RO_list = [RO_string]
-				items['SNMP_RO'] = SNMP_RO_list
+				items['snmp_community'] = SNMP_RO_list
 				#yaml.safe_dump(items, out_file, default_flow_style=False)
 			elif ipam_sheet_common.cell_value(row,column) == "SNMP RW":
 				RW_string = ipam_sheet_common.cell_value(row,1)
@@ -72,12 +72,29 @@ def start_xls():
 				items['EIGRP_AS'] = int(eigrp_as_string)
 				#yaml.safe_dump(items, out_file, default_flow_style=False)
 
+	for row in range(ipam_sheet_vlan.nrows):
+		vlan_id = ipam_sheet_vlan.cell_value(row, 0)
+		vlan_name = ipam_sheet_vlan.cell_value(row, 1)
+		try:
+			vlan_info = {}
+			vlan_info["id"] = int(vlan_id)
+			vlan_info["name"] = str(vlan_name)
+			try:
+				vlan_list
+				vlan_list.extend([vlan_info])
+			except NameError:
+				vlan_list = [vlan_info]
+			# vlans = [vlan_info]
+			items['vlans'] = vlan_list
+		except ValueError:
+			pass
 
 	#items.update(item)
-	print json.dumps(items, indent=4)
+	#print json.dumps(items, indent=4)
 
-	
-	yaml.safe_dump(items, out_file, default_flow_style=False)
+	#print yaml.safe_dump(items)
+	print yaml.safe_dump(items, default_flow_style=None, explicit_start=True)
+	yaml.safe_dump(items, out_file, default_flow_style=None, explicit_start=True)
 
 if __name__ == "__main__":
 	start_xls()
