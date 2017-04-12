@@ -94,27 +94,60 @@ def start_xls():
 		ipam_sheet_intf = ipam_book.sheet_by_index(sheet_id)
 		for row in range(ipam_sheet_intf.nrows):
 			intf_id = ipam_sheet_intf.cell_value(row, 0)
-			#ip_addr = ipam_sheet_intf.cell_value(row, 1)
+			ip_addr = ipam_sheet_intf.cell_value(row, 1)
 			sw_mode = ipam_sheet_intf.cell_value(row, 5)
 			allowed_vlans = ipam_sheet_intf.cell_value(row, 6)
 			native_vlan = ipam_sheet_intf.cell_value(row, 7)
 			port_ch = ipam_sheet_intf.cell_value(row, 8)
-			try:
-				intf_info = {}
-				intf_info["intf"] = intf_id
-				intf_info["mode"] = sw_mode
-				intf_info["vpc"] = int(port_ch)
-				intf_info["vlan_range"] = allowed_vlans
-				intf_info["native_vlan"] = int(native_vlan)
+			if sw_mode == 'Trunk':
 				try:
-					intf_list
-					intf_list.extend([intf_info])
-				except NameError:
-					intf_list = [intf_info]
-				# vlans = [vlan_info]
-				items['interface'] = intf_list
-			except ValueError:
-				continue
+					intf_info = {}
+					intf_info["intf"] = intf_id
+					intf_info["mode"] = sw_mode
+					intf_info["switchport"] = "switchport"
+					intf_info["vpc"] = int(port_ch)
+					intf_info["vlan_range"] = allowed_vlans
+					intf_info["native_vlan"] = int(native_vlan)
+					try:
+						intf_list
+						intf_list.extend([intf_info])
+					except NameError:
+						intf_list = [intf_info]
+					# vlans = [vlan_info]
+					items['interfaces'] = intf_list
+				except ValueError:
+					pass
+			elif sw_mode == 'Access':
+				try:
+					intf_info = {}
+					intf_info["intf"] = intf_id
+					intf_info["mode"] = sw_mode
+					intf_info["switchport"] = "switchport"
+					intf_info["vpc"] = int(port_ch)
+					intf_info["vlan_range"] = allowed_vlans
+					try:
+						intf_list
+						intf_list.extend([intf_info])
+					except NameError:
+						intf_list = [intf_info]
+					items['interfaces'] = intf_list
+				except ValueError:
+					pass
+			elif sw_mode == 'L3':
+				try:
+					intf_info = {}
+					intf_info["intf"] = intf_id
+					intf_info["switchport"] = "no switchport"
+					intf_info["ip"] = ip_addr
+					try:
+						intf_list
+						intf_list.extend([intf_info])
+					except NameError:
+						intf_list = [intf_info]
+					items['interfaces'] = intf_list
+				except ValueError:
+					pass
+
 
 
 	#items.update(item)
@@ -122,7 +155,7 @@ def start_xls():
 
 	#print yaml.safe_dump(items)
 	print yaml.safe_dump(items, default_flow_style=None, explicit_start=True)
-	#yaml.safe_dump(items, out_file, default_flow_style=None, explicit_start=True)
+	yaml.safe_dump(items, out_file, default_flow_style=None, explicit_start=True)
 
 if __name__ == "__main__":
 	start_xls()
