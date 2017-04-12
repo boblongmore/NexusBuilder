@@ -5,9 +5,10 @@ import yaml
 import json
 
 def start_xls():
-	ipam_book = xlrd.open_workbook("Port_Allocation.xlsx")
+	ipam_book = xlrd.open_workbook("switch_worksheet.xlsx")
 	ipam_sheet_common = ipam_book.sheet_by_index(0)
 	ipam_sheet_vlan = ipam_book.sheet_by_index(1)
+	num_sheets = len(ipam_book.sheet_names())
 	
 	out_file = open('xlstoyaml.yml', 'a')
 	#out_file.write('---\n\n')
@@ -89,12 +90,39 @@ def start_xls():
 		except ValueError:
 			pass
 
+	for sheet_id in range(2,num_sheets):
+		ipam_sheet_intf = ipam_book.sheet_by_index(sheet_id)
+		for row in range(ipam_sheet_intf.nrows):
+			intf_id = ipam_sheet_intf.cell_value(row, 0)
+			#ip_addr = ipam_sheet_intf.cell_value(row, 1)
+			sw_mode = ipam_sheet_intf.cell_value(row, 5)
+			allowed_vlans = ipam_sheet_intf.cell_value(row, 6)
+			native_vlan = ipam_sheet_intf.cell_value(row, 7)
+			port_ch = ipam_sheet_intf.cell_value(row, 8)
+			try:
+				intf_info = {}
+				intf_info["intf"] = intf_id
+				intf_info["mode"] = sw_mode
+				intf_info["vpc"] = int(port_ch)
+				intf_info["vlan_range"] = allowed_vlans
+				intf_info["native_vlan"] = int(native_vlan)
+				try:
+					intf_list
+					intf_list.extend([intf_info])
+				except NameError:
+					intf_list = [intf_info]
+				# vlans = [vlan_info]
+				items['interface'] = intf_list
+			except ValueError:
+				continue
+
+
 	#items.update(item)
 	#print json.dumps(items, indent=4)
 
 	#print yaml.safe_dump(items)
 	print yaml.safe_dump(items, default_flow_style=None, explicit_start=True)
-	yaml.safe_dump(items, out_file, default_flow_style=None, explicit_start=True)
+	#yaml.safe_dump(items, out_file, default_flow_style=None, explicit_start=True)
 
 if __name__ == "__main__":
 	start_xls()
