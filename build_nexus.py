@@ -7,20 +7,25 @@ from jinja2 import Template
 import os
 
 def start_xls(hostname, sheet_id):
+	# reads the contents of an excel file and builds dictionaries that are then rendered in a yaml format
+	# ensures the paths for placing the cfg and yml files exists
 	check_path()
+	#opens the excel sheet
+	#sheet id 0 is the common information
+	#sheet id 1 is the vlan information
 	ipam_book = xlrd.open_workbook("switch_worksheet.xlsx")
 	ipam_sheet_common = ipam_book.sheet_by_index(0)
 	ipam_sheet_vlan = ipam_book.sheet_by_index(1)
-	#num_sheets = len(ipam_book.sheet_names())
 
+	#creates yaml file
 	yml_file_name = hostname + '.yml'
 	out_file = open("./yml_files/" + yml_file_name, 'a')
-	#out_file.write('---\n\n')
 
 	items = {}
 	items['hostname'] = hostname
 
 	for row in range(ipam_sheet_common.nrows):
+		#iterates through common information sheet to parse variables
 		for column in range(ipam_sheet_common.ncols):
 			if ipam_sheet_common.cell_value(row,column) == "Domain Name":
 				domain = ipam_sheet_common.cell_value(row,1)
@@ -79,6 +84,7 @@ def start_xls(hostname, sheet_id):
 				#yaml.safe_dump(items, out_file, default_flow_style=False)
 
 	for row in range(ipam_sheet_vlan.nrows):
+		#iterates through the VLAN sheet to populate variables
 		vlan_id = ipam_sheet_vlan.cell_value(row, 0)
 		vlan_name = ipam_sheet_vlan.cell_value(row, 1)
 		try:
@@ -95,7 +101,8 @@ def start_xls(hostname, sheet_id):
 		except ValueError:
 			pass
 
-	#for sheet_id in range(2,num_sheets):
+	#iterates through the sheet for each switch as defines by separate sheets.
+	#populates interface variables for each switch
 	ipam_sheet_intf = ipam_book.sheet_by_index(sheet_id)
 	for row in range(ipam_sheet_intf.nrows):
 		intf_id = ipam_sheet_intf.cell_value(row, 0)
@@ -162,26 +169,23 @@ def start_xls(hostname, sheet_id):
 				items['interfaces'] = intf_list
 			except ValueError:
 				pass
-
-
-
-	#items.update(item)
-	#print json.dumps(items, indent=4)
-
-	#print yaml.safe_dump(items)
+	#prints yaml files, comment out to remove
 	print yaml.safe_dump(items, default_flow_style=None, explicit_start=True)
+	#writes the items to the yaml file
 	yaml.safe_dump(items, out_file, default_flow_style=None, explicit_start=True)
+	#calls the config render function, which converts the yaml file, via a jinja2 template, to a Nexus configuration file.
+	#passes the yaml file name to be used as the config file name
 	config_render(yml_file_name)
 
 def config_render(yml_file):
+	#this function opens a yaml file and renders a nexus configuration via a pre-define jinja2 template
 	# Parse the YAML file and produce a Python dict.
 	yaml_vars = yaml.load(open("./yml_files/" + yml_file).read())
 	# Load the Jinja2 template into a Python data structure.
 	template = Template(open('nexus9k.j2').read())
 	# Render the configuration using the Jinja2 render method using yaml_vars as arg.
 	rendered_config = template.render(yaml_vars)
-	# Write the rendered configuration to a text file.
-	# config_name = yaml_vars['hostname']
+	# Write the rendered configuration to a text file. Takes the yaml file name strips off the filetype .yml and replaces with .cfg
 	name_split = yml_file.split(".")[0]
 	config_name = "./cfg_files/" + name_split + ".cfg"
 	with open(config_name, 'w') as config:
@@ -192,6 +196,7 @@ def config_render(yml_file):
 		print "The configuration file, %s,  is not present." % config_name
 
 def check_path():
+	# Creates two directories for placing yaml and config files respectively
 	path_yml = "./yml_files/"
 	path_cfg = "./cfg_files/"
 	paths = [path_yml, path_cfg]
@@ -202,6 +207,9 @@ def check_path():
 	return
 
 def build_config():
+	# Starting on the third sheet of the workbook, there are the interface attributes.
+	# This function iterates through those sheets and uses the sheet name as the switch name.
+	# It then passes the hostname and sheet number to the start_xls function, which builds a yaml file.
 	ipam_book = xlrd.open_workbook("switch_worksheet.xlsx")
 	num_sheets = len(ipam_book.sheet_names())
 	for sheet_id in range(2, num_sheets):
