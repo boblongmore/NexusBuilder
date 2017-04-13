@@ -7,13 +7,14 @@ from jinja2 import Template
 import os
 
 def start_xls(hostname, sheet_id):
+	check_path()
 	ipam_book = xlrd.open_workbook("switch_worksheet.xlsx")
 	ipam_sheet_common = ipam_book.sheet_by_index(0)
 	ipam_sheet_vlan = ipam_book.sheet_by_index(1)
 	#num_sheets = len(ipam_book.sheet_names())
 
 	yml_file_name = hostname + '.yml'
-	out_file = open(yml_file_name, 'a')
+	out_file = open("./yml_files/" + yml_file_name, 'a')
 	#out_file.write('---\n\n')
 
 	items = {}
@@ -174,7 +175,7 @@ def start_xls(hostname, sheet_id):
 
 def config_render(yml_file):
 	# Parse the YAML file and produce a Python dict.
-	yaml_vars = yaml.load(open(yml_file).read())
+	yaml_vars = yaml.load(open("./yml_files/" + yml_file).read())
 	# Load the Jinja2 template into a Python data structure.
 	template = Template(open('nexus9k.j2').read())
 	# Render the configuration using the Jinja2 render method using yaml_vars as arg.
@@ -182,13 +183,23 @@ def config_render(yml_file):
 	# Write the rendered configuration to a text file.
 	# config_name = yaml_vars['hostname']
 	name_split = yml_file.split(".")[0]
-	config_name = name_split + ".cfg"
+	config_name = "./cfg_files/" + name_split + ".cfg"
 	with open(config_name, 'w') as config:
 		config.write(rendered_config)
 	if os.path.isfile(config_name):
 		print "The configuration file, %s, is present." % config_name
 	else:
 		print "The configuration file, %s,  is not present." % config_name
+
+def check_path():
+	path_yml = "./yml_files/"
+	path_cfg = "./cfg_files/"
+	paths = [path_yml, path_cfg]
+	for path in paths:
+		dir = os.path.dirname(path)
+		if not os.path.exists(dir):
+			os.makedirs(dir)
+	return
 
 def build_config():
 	ipam_book = xlrd.open_workbook("switch_worksheet.xlsx")
