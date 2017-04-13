@@ -3,17 +3,21 @@
 import xlrd
 import yaml
 import json
+from jinja2 import Template
+import os
 
-def start_xls():
+def start_xls(hostname, sheet_id):
 	ipam_book = xlrd.open_workbook("switch_worksheet.xlsx")
 	ipam_sheet_common = ipam_book.sheet_by_index(0)
 	ipam_sheet_vlan = ipam_book.sheet_by_index(1)
-	num_sheets = len(ipam_book.sheet_names())
-	
-	out_file = open('xlstoyaml.yml', 'a')
+	#num_sheets = len(ipam_book.sheet_names())
+
+	yml_file_name = hostname + '.yml'
+	out_file = open(yml_file_name, 'a')
 	#out_file.write('---\n\n')
 
 	items = {}
+	items['hostname'] = hostname
 
 	for row in range(ipam_sheet_common.nrows):
 		for column in range(ipam_sheet_common.ncols):
@@ -90,74 +94,73 @@ def start_xls():
 		except ValueError:
 			pass
 
-	for sheet_id in range(2,num_sheets):
-		ipam_sheet_intf = ipam_book.sheet_by_index(sheet_id)
-		for row in range(ipam_sheet_intf.nrows):
-			intf_id = ipam_sheet_intf.cell_value(row, 0)
-			ip_addr = ipam_sheet_intf.cell_value(row, 1)
-			sw_mode = ipam_sheet_intf.cell_value(row, 5)
-			allowed_vlans = ipam_sheet_intf.cell_value(row, 6)
-			native_vlan = ipam_sheet_intf.cell_value(row, 7)
-			port_ch = ipam_sheet_intf.cell_value(row, 8)
-			stp_mode = ipam_sheet_intf.cell_value(row, 9)
-			intf_descr = ipam_sheet_intf.cell_value(row, 10)
-			if sw_mode == 'Trunk':
+	#for sheet_id in range(2,num_sheets):
+	ipam_sheet_intf = ipam_book.sheet_by_index(sheet_id)
+	for row in range(ipam_sheet_intf.nrows):
+		intf_id = ipam_sheet_intf.cell_value(row, 0)
+		ip_addr = ipam_sheet_intf.cell_value(row, 1)
+		sw_mode = ipam_sheet_intf.cell_value(row, 5)
+		allowed_vlans = ipam_sheet_intf.cell_value(row, 6)
+		native_vlan = ipam_sheet_intf.cell_value(row, 7)
+		port_ch = ipam_sheet_intf.cell_value(row, 8)
+		stp_mode = ipam_sheet_intf.cell_value(row, 9)
+		intf_descr = ipam_sheet_intf.cell_value(row, 10)
+		if sw_mode == 'Trunk':
+			try:
+				intf_info = {}
+				intf_info["intf"] = intf_id
+				intf_info["description"] = intf_descr
+				intf_info["mode"] = sw_mode
+				intf_info["switchport"] = "switchport"
+				intf_info["vpc"] = int(port_ch)
+				intf_info["vlan_range"] = allowed_vlans
+				intf_info["native_vlan"] = int(native_vlan)
+				intf_info["stp"] = stp_mode
+				intf_info["state"] = "no shutdown"
 				try:
-					intf_info = {}
-					intf_info["intf"] = intf_id
-					intf_info["description"] = intf_descr
-					intf_info["mode"] = sw_mode
-					intf_info["switchport"] = "switchport"
-					intf_info["vpc"] = int(port_ch)
-					intf_info["vlan_range"] = allowed_vlans
-					intf_info["native_vlan"] = int(native_vlan)
-					intf_info["stp"] = stp_mode
-					intf_info["state"] = "no shutdown"
-					try:
-						intf_list
-						intf_list.extend([intf_info])
-					except NameError:
-						intf_list = [intf_info]
-					# vlans = [vlan_info]
-					items['interfaces'] = intf_list
-				except ValueError:
-					pass
-			elif sw_mode == 'Access':
+					intf_list
+					intf_list.extend([intf_info])
+				except NameError:
+					intf_list = [intf_info]
+				# vlans = [vlan_info]
+				items['interfaces'] = intf_list
+			except ValueError:
+				pass
+		elif sw_mode == 'Access':
+			try:
+				intf_info = {}
+				intf_info["intf"] = intf_id
+				intf_info["description"] = intf_descr
+				intf_info["mode"] = sw_mode
+				intf_info["switchport"] = "switchport"
+				intf_info["vpc"] = int(port_ch)
+				intf_info["vlan_range"] = allowed_vlans
+				intf_info["stp"] = stp_mode
+				intf_info["state"] = "no shutdown"
 				try:
-					intf_info = {}
-					intf_info["intf"] = intf_id
-					intf_info["description"] = intf_descr
-					intf_info["mode"] = sw_mode
-					intf_info["switchport"] = "switchport"
-					intf_info["vpc"] = int(port_ch)
-					intf_info["vlan_range"] = allowed_vlans
-					intf_info["stp"] = stp_mode
-					intf_info["state"] = "no shutdown"
-
-					try:
-						intf_list
-						intf_list.extend([intf_info])
-					except NameError:
-						intf_list = [intf_info]
-					items['interfaces'] = intf_list
-				except ValueError:
-					pass
-			elif sw_mode == 'L3':
+					intf_list
+					intf_list.extend([intf_info])
+				except NameError:
+					intf_list = [intf_info]
+				items['interfaces'] = intf_list
+			except ValueError:
+				pass
+		elif sw_mode == 'L3':
+			try:
+				intf_info = {}
+				intf_info["intf"] = intf_id
+				intf_info["description"] = intf_descr
+				intf_info["switchport"] = "no switchport"
+				intf_info["ip"] = ip_addr
+				intf_info["state"] = "no shutdown"
 				try:
-					intf_info = {}
-					intf_info["intf"] = intf_id
-					intf_info["description"] = intf_descr
-					intf_info["switchport"] = "no switchport"
-					intf_info["ip"] = ip_addr
-					intf_info["state"] = "no shutdown"
-					try:
-						intf_list
-						intf_list.extend([intf_info])
-					except NameError:
-						intf_list = [intf_info]
-					items['interfaces'] = intf_list
-				except ValueError:
-					pass
+					intf_list
+					intf_list.extend([intf_info])
+				except NameError:
+					intf_list = [intf_info]
+				items['interfaces'] = intf_list
+			except ValueError:
+				pass
 
 
 
@@ -167,6 +170,32 @@ def start_xls():
 	#print yaml.safe_dump(items)
 	print yaml.safe_dump(items, default_flow_style=None, explicit_start=True)
 	yaml.safe_dump(items, out_file, default_flow_style=None, explicit_start=True)
+	config_render(yml_file_name)
+
+def config_render(yml_file):
+	# Parse the YAML file and produce a Python dict.
+	yaml_vars = yaml.load(open(yml_file).read())
+	# Load the Jinja2 template into a Python data structure.
+	template = Template(open('nexus9k.j2').read())
+	# Render the configuration using the Jinja2 render method using yaml_vars as arg.
+	rendered_config = template.render(yaml_vars)
+	# Write the rendered configuration to a text file.
+	# config_name = yaml_vars['hostname']
+	name_split = yml_file.split(".")[0]
+	config_name = name_split + ".cfg"
+	with open(config_name, 'w') as config:
+		config.write(rendered_config)
+	if os.path.isfile(config_name):
+		print "The configuration file, %s, is present." % config_name
+	else:
+		print "The configuration file, %s,  is not present." % config_name
+
+def build_config():
+	ipam_book = xlrd.open_workbook("switch_worksheet.xlsx")
+	num_sheets = len(ipam_book.sheet_names())
+	for sheet_id in range(2, num_sheets):
+		hostname = ipam_book.sheet_names()[sheet_id]
+		start_xls(hostname, sheet_id)
 
 if __name__ == "__main__":
-	start_xls()
+	build_config()
