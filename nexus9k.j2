@@ -1,0 +1,88 @@
+feature nxapi
+feature vpc
+feature lacp
+feaure udld
+
+hostname {{ hostname }}
+
+
+ip domain-name {{ domain_name }}
+crypto key generate rsa modulus 2048
+
+vtp mode off
+
+vpc domain {{ vpc_id }}
+peer-switch
+role priority {{ vpc_priority }}
+system-priority 2000
+peer-keepalive destination {{ pka_dest }}
+auto-recovery
+ip arp synchronize
+
+{% for snmp_string in snmp_community -%}
+snmp-server community {{ snmp_string }}
+{% endfor %}
+
+{% for ntp in ntp_server %}
+ntp-server {{ ntp }} use-vrf management
+{% endfor %}
+
+{% for vlan in vlans %}
+vlan {{ vlan.id }}
+{% if vlan.name -%}
+name {{ vlan.name }}
+{% endif %}
+{% endfor %}
+
+{% for radius in radius_server %}
+radius-server host {{ radius }} key {{ radius_key }} authentication accounting
+{% endfor %}
+
+aaa group server radius radius 
+    use-vrf management
+ip radius source-interface mgmt0
+
+{% for interface in interfaces %}
+interface {{ interface.intf }}
+  {{ interface.switchport }}
+  description {{ interface.description }}
+{%- if interface.switchport == 'no switchport' %}
+  ip address {{ interface.ip }}
+{%- endif %}
+{%- if interface.switchport == 'switchport' %}
+  switchport mode {{ interface.mode }}
+  mtu 9216
+{%- if interface.stp == "Normal" %}
+  spanning-tree port type normal
+{%- endif %}
+{%- if interface.stp == "Edge" %}
+{%- if interface.mode == "Access" %}
+  switchport access vlan {{ interface.vlan_range }}
+  spanning-tree port type edge
+  spanning-tree bpduguard enable
+{%- endif %}
+{%- if interface.mode == "Trunk" %}
+  switchport trunk native vlan {{ interface.native_vlan }}
+  switchport trunk allowed vlan {{ interface.vlan_range }}
+  spanning-tree port type edge trunk
+  spanning-tree bpduguard enable
+{%- endif %}
+{%- endif %}
+{%- if interface.vpc != 'no' %}
+  channel-group {{ interface.vpc }} mode active
+{%- endif %}
+{%- endif %}
+  {{ interface.state }}
+{% endfor %}
+
+{% for portchannel in portchannels %}
+interface port-channel {{ portchannel.intf }}
+{{ portchannel.switchport }}
+switchport mode {{ portchannel.mode }}
+switchport mode {{ portchannel.mode }}
+switchport trunk native vlan {{ portchannel.native_vlan }}
+switchport trunk allowed vlan {{ portchannel.vlan_range }}
+mtu {{ portchannel.mtu }}
+vpc {{ portchannel.intf }}
+{{ portchannel.state }}
+{% endfor %}

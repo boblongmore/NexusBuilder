@@ -99,15 +99,20 @@ def start_xls():
 			allowed_vlans = ipam_sheet_intf.cell_value(row, 6)
 			native_vlan = ipam_sheet_intf.cell_value(row, 7)
 			port_ch = ipam_sheet_intf.cell_value(row, 8)
+			stp_mode = ipam_sheet_intf.cell_value(row, 9)
+			intf_descr = ipam_sheet_intf.cell_value(row, 10)
 			if sw_mode == 'Trunk':
 				try:
 					intf_info = {}
 					intf_info["intf"] = intf_id
+					intf_info["description"] = intf_descr
 					intf_info["mode"] = sw_mode
 					intf_info["switchport"] = "switchport"
 					intf_info["vpc"] = int(port_ch)
 					intf_info["vlan_range"] = allowed_vlans
 					intf_info["native_vlan"] = int(native_vlan)
+					intf_info["stp"] = stp_mode
+					intf_info["state"] = "no shutdown"
 					try:
 						intf_list
 						intf_list.extend([intf_info])
@@ -121,10 +126,14 @@ def start_xls():
 				try:
 					intf_info = {}
 					intf_info["intf"] = intf_id
+					intf_info["description"] = intf_descr
 					intf_info["mode"] = sw_mode
 					intf_info["switchport"] = "switchport"
 					intf_info["vpc"] = int(port_ch)
 					intf_info["vlan_range"] = allowed_vlans
+					intf_info["stp"] = stp_mode
+					intf_info["state"] = "no shutdown"
+
 					try:
 						intf_list
 						intf_list.extend([intf_info])
@@ -137,8 +146,10 @@ def start_xls():
 				try:
 					intf_info = {}
 					intf_info["intf"] = intf_id
+					intf_info["description"] = intf_descr
 					intf_info["switchport"] = "no switchport"
 					intf_info["ip"] = ip_addr
+					intf_info["state"] = "no shutdown"
 					try:
 						intf_list
 						intf_list.extend([intf_info])
