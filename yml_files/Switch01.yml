@@ -1,0 +1,58 @@
+---
+DHCP_Relay: 10.1.1.254
+EIGRP_AS: 100
+EIGRP_name: exampleEIGRP
+SNMP: [10.1.1.1]
+SNMP_RW: privateRW
+domain_name: example.com
+hostname: Switch01
+interfaces:
+- {description: Core Switch, intf: Eth1/1, mode: Trunk, native_vlan: 10, state: no
+    shutdown, stp: trunk, switchport: switchport, vlan_range: All, vpc: 1002}
+- {description: Closet Stack, intf: Eth1/2, mode: Trunk, native_vlan: 10, state: no
+    shutdown, stp: trunk, switchport: switchport, vlan_range: '10,100,200,300', vpc: 1003}
+- {description: Closet Stack, intf: Eth1/3, mode: Trunk, native_vlan: 10, state: no
+    shutdown, stp: trunk, switchport: switchport, vlan_range: '10,100,200,300', vpc: 1004}
+- {description: Closet Stack, intf: Eth1/4, mode: Trunk, native_vlan: 10, state: no
+    shutdown, stp: trunk, switchport: switchport, vlan_range: '10,100,200,300', vpc: 1005}
+- {description: Closet Stack, intf: Eth1/5, mode: Trunk, native_vlan: 10, state: no
+    shutdown, stp: trunk, switchport: switchport, vlan_range: '10,100,200,300', vpc: 1006}
+- {description: '', intf: Eth1/6, ip: 192.168.1.5/30, state: no shutdown, switchport: no
+    switchport}
+- {description: Closet Stack, intf: Eth1/22, mode: Trunk, native_vlan: 10, state: no
+    shutdown, stp: trunk, switchport: switchport, vlan_range: All, vpc: 50}
+- {description: vPC Peer-Link, intf: Eth1/23, mode: Trunk, native_vlan: 10, state: no
+    shutdown, stp: trunk, switchport: switchport, vlan_range: All, vpc: 1000}
+- {description: vPC Peer-Link, intf: Eth1/24, mode: Trunk, native_vlan: 10, state: no
+    shutdown, stp: trunk, switchport: switchport, vlan_range: All, vpc: 1000}
+- {description: Migration Link, intf: Port-Channel50, mode: Trunk, native_vlan: 10,
+  state: no shutdown, stp: trunk, switchport: switchport, vlan_range: All, vpc: 50}
+- {description: Core Switch, intf: Port-Channel1002, mode: Trunk, native_vlan: 10,
+  state: no shutdown, stp: trunk, switchport: switchport, vlan_range: All, vpc: 1002}
+- {description: Closet Stack, intf: Port-Channel1003, mode: Trunk, native_vlan: 10,
+  state: no shutdown, stp: trunk, switchport: switchport, vlan_range: '10,100,200,300',
+  vpc: 1003}
+- {description: Closet Stack, intf: Port-Channel1004, mode: Trunk, native_vlan: 10,
+  state: no shutdown, stp: trunk, switchport: switchport, vlan_range: '10,100,200,300',
+  vpc: 1004}
+- {description: Closet Stack, intf: Port-Channel1005, mode: Trunk, native_vlan: 10,
+  state: no shutdown, stp: trunk, switchport: switchport, vlan_range: '10,100,200,300',
+  vpc: 1005}
+- {description: Closet Stack, intf: Port-Channel1006, mode: Trunk, native_vlan: 10,
+  state: no shutdown, stp: trunk, switchport: switchport, vlan_range: '10,100,200,300',
+  vpc: 1006}
+netflow_ip: 10.1.1.1
+ntp_ip: 10.1.1.100
+snmp_community: [publicRO]
+syslog_ip: [10.1.1.1]
+time_zone: CST
+vlans:
+- {id: 4, name: DMZ}
+- {id: 10, name: SERVERS}
+- {id: 100, name: WIRELESS_INT}
+- {id: 120, name: Management}
+- {id: 140, name: VMOTION}
+- {id: 200, name: WORKSTATIONS}
+- {id: 300, name: PRINTERS}
+- {id: 400, name: iSCSI-A}
+- {id: 420, name: iSCSI-B}
